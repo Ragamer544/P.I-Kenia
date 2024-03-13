@@ -1,17 +1,18 @@
-/*Ajustar o módulo de saída do cliente, calculando e exibindo o valor
-a pagar, lendo o valor pago e calculando o troco. Vocês podem fazer uma proposta
-de cálculo de valor a pagar considerando horas completas e minutos extras (inferior
-a 1 hora)*/
+/*O estacionamento funciona de 6 às 20 horas. Deve ser mantido
+num array auxiliar o quantitativo de carros com entrada em cada horário. No
+módulo FecharCaixa, exibir em tela relatório com esses quantitativos. E havendo
+carros no estacionamento, exibir alerta ao utilizador.*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-// Declaração de variáveis globais
+// Variáveis globais
 char Estaciona[30][14]; // Matriz para armazenar informações sobre as vagas do estacionamento
 float Valor; // Valor do estacionamento por hora de uso
 char Responsavel[21], Iniciou = 0; // Responsável pelo estacionamento e flag indicando se o caixa foi aberto
+int QuantidadePorHora[15] = {0}; // Array para armazenar a quantidade de carros por hora
 
 // Função para abrir o caixa do estacionamento
 void AbrirCaixa() {
@@ -57,8 +58,14 @@ void ClienteChega() {
         scanf("%s", Hora);
         strcat(Entrada, "+");
         strcat(Entrada, Hora);
-        // Registra a chegada do cliente na vaga especificada
         strcpy(Estaciona[Vaga - 1], Entrada);
+
+        // Atualizar o quantitativo de carros para a hora de entrada
+        int hora = atoi(Hora);
+        if (hora >= 6 && hora <= 20) {
+            QuantidadePorHora[hora - 6]++;
+        }
+
         printf("Chegada registrada com sucesso!\n");
     } else {
         printf("\nERRO: Antes eh preciso abrir o caixa!\n");
@@ -85,10 +92,8 @@ void ClienteSai() {
         printf("Qual a vaga ocupada? ");
         scanf("%d", &Vaga);
 
-        // Obtém os dados de entrada do cliente na vaga especificada
         strcpy(Entrada, Estaciona[Vaga - 1]);
 
-        // Extrai a hora e o minuto da entrada
         Hora[0] = Entrada[8];
         Hora[1] = Entrada[9];
         Hora[2] = '\0';
@@ -98,44 +103,61 @@ void ClienteSai() {
         Min[2] = '\0';
         M = atoi(Min);
 
-        // Exibe o horário de entrada do cliente
         printf("\nHorario de entrada: %d:%d\n", H, M);
 
-        // Solicita ao usuário o horário de saída
         printf("Qual o horario de saida [formato nn:nn]? ");
         scanf("%d:%d", &HoraSaida, &MinSaida);
 
-        // Calcula o tempo em minutos que o cliente permaneceu no estacionamento
         int TempoEstacionado = (HoraSaida - H) * 60 + (MinSaida - M);
 
-        // Calcula o número de horas completas e os minutos extras
         int HorasCompletas = TempoEstacionado / 60;
         int MinutosExtras = TempoEstacionado % 60;
 
-        // Calcula o valor total a pagar, considerando horas completas e minutos extras
         TotalPagar = Valor * HorasCompletas;
         if (MinutosExtras > 0) {
             TotalPagar += Valor; // Adiciona uma hora extra se houver minutos extras
         }
 
-        // Exibe o total a pagar ao cliente
         printf("\nTotal a pagar: %.2f\n", TotalPagar);
 
-        // Solicita ao cliente o valor pago e calcula o troco
         printf("Qual o valor pago? ");
         scanf("%f", &Pago);
+
         Troco = Pago - TotalPagar;
+
         printf("\nTroco: %.2f\n", Troco);
+
+        // Limpar os dados da vaga
+        strcpy(Estaciona[Vaga - 1], "LIVRE");
 
     } else {
         printf("\nERRO: Antes eh preciso abrir o caixa!\n");
     }
-    system("pause"); // Pausa a execução até que o usuário pressione uma tecla (apenas para Windows)
+    system("pause");
 }
+
 
 // Função para fechar o caixa do estacionamento
 void FecharCaixa() {
-    // A implementação desta função não foi fornecida no código original
+    printf("\n >>> Relatorio <<<\n");
+    printf("Quantidade de carros por hora:\n");
+    for (int i = 0; i < 15; i++) {
+        printf("Hora %d: %d carros\n", i + 6, QuantidadePorHora[i]);
+    }
+
+    // Verificar se há carros no estacionamento
+    int totalCarros = 0;
+    for (int i = 0; i < 30; i++) {
+        if (strcmp(Estaciona[i], "LIVRE") != 0) {
+            totalCarros++;
+        }
+    }
+
+    if (totalCarros > 0) {
+        printf("\nALERTA: Ainda existem carros no estacionamento!\n");
+    } else {
+        printf("\nO estacionamento esta vazio.\n");
+    }
 }
 
 // Função principal
