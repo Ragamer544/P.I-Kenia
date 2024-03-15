@@ -3,16 +3,44 @@
 
 float M[4][6] = {
     {385, 534, 309, 546, 503, 477},
-    {12, 121, 12, 3, 24, 12},
+    {12, 12, 12, 3, 24, 12},
     {35.9, 72.1, 46.2, 74.3, 78, 90},
     {-28, -18, -18, -18, -22, -18}
 };
+char *NomeFreezers[] = {"Deia", "Sul", "NSul", "Frio", "Fri", "Lux"};
 
-int Frz, Crc;
+int Frez, Carac; // Variáveis globais para armazenar o freezer e a característica selecionados
 
+// Função para encontrar o maior valor em uma linha da matriz
+void ExibirMaiorValorEmLinha(float Matriz[][6], int L, int C, float *maiorValor, int *index) {
+    *maiorValor = Matriz[L][0];
+    *index = 0;
+
+    for(int i = 1; i < C; i++) {
+        if(Matriz[L][i] > *maiorValor) {
+            *maiorValor = Matriz[L][i];
+            *index = i;
+        }
+    }
+}
+
+// Função para encontrar o menor valor em uma linha da matriz
+void ExibirMenorValorEmLinha(float Matriz[][6], int L, int C, float *menorValor, int *index) {
+    *menorValor = Matriz[L][0];
+    *index = 0;
+
+    for(int i = 1; i < C; i++) {
+        if(Matriz[L][i] < *menorValor) {
+            *menorValor = Matriz[L][i];
+            *index = i;
+        }
+    }
+}
+
+// Função para exibir a matriz
 void ExibeMatriz(float Matriz[][6], int L, int C) {
     printf("                      Deia   Sul  NSul  Frio   Fri   Lux \n");
-    for (int i = 0; i < L; i++) {
+    for(int i = 0; i < L; i++) {
         if (i == 0) printf("Capacidade (litros) ");
         if (i == 1) printf("Garantia (meses)    ");
         if (i == 2) printf("Economia (KWh/mes)  ");
@@ -23,8 +51,9 @@ void ExibeMatriz(float Matriz[][6], int L, int C) {
     }
 }
 
+// Função para exibir uma coluna da matriz
 void ExibeColuna(float Matriz[][6], int L, int C) {
-    for (int i = 0; i < L; i++) {
+    for(int i = 0; i < L; i++) {
         if (i == 0) printf("Capacidade (litros) ");
         if (i == 1) printf("Garantia (meses)    ");
         if (i == 2) printf("Economia (KWh/mes)  ");
@@ -33,14 +62,17 @@ void ExibeColuna(float Matriz[][6], int L, int C) {
     }
 }
 
+// Função para exibir uma linha da matriz
 void ExibeLinha(float Matriz[][6], int L, int C) {
     printf("Deia   Sul  NSul  Frio   Fri   Lux \n");
-    for (int i = 0; i < C; i++)
-        printf("%.1f ", Matriz[L][i]);
+    for(int i = 0; i < C; i++)
+        printf("%6.1f ", Matriz[L][i]);
     printf("\n");
 }
 
-void SelecionaFreezer(float Matriz[][6], int *F) {
+// Função para selecionar um freezer
+int SelecionaFreezer() {
+    int Op;
     printf("Selecione o freezer desejado:\n");
     printf("1 - Deia\n");
     printf("2 - Sul\n");
@@ -49,84 +81,78 @@ void SelecionaFreezer(float Matriz[][6], int *F) {
     printf("5 - Fri\n");
     printf("6 - Lux\n\n");
     printf("Opcao: ");
-    int Op;
     scanf("%d", &Op);
-    *F = Op - 1;
+    return Op - 1;
 }
 
-void SelecionaCaracteristica(float Matriz[][6], int *C) {
+// Função para selecionar uma característica
+int SelecionaCaracteristica() {
+    int Op;
     printf("Caracteristica desejada:\n");
     printf("1 - Capacidade (litros)\n");
     printf("2 - Garantia (meses)\n");
     printf("3 - Economia (KWh/mes)\n");
     printf("4 - Temperatura Minima (Celsius)\n");
     printf("Opcao: ");
-    int Op;
     scanf("%d", &Op);
-    *C = Op - 1;
+    return Op - 1;
 }
 
-void AlterarDado(float Matriz[][6], int L, int C) {
-    int linha, coluna;
-    float novoValor;
-    printf("Digite a linha e a coluna para alterar (linha coluna): ");
-    scanf("%d %d", &linha, &coluna);
+// Função para alterar um valor na matriz
+void AlterarValor(float Matriz[][6], int Freezer, int Caract) {
+    float NovoValor;
     printf("Digite o novo valor: ");
-    scanf("%f", &novoValor);
-    Matriz[linha - 1][coluna - 1] = novoValor;
-    printf("Dado alterado com sucesso!\n");
+    scanf("%f", &NovoValor);
+
+    Matriz[Freezer][Caract] = NovoValor;
+
+    printf("Valor alterado com sucesso!\n");
 }
 
-void MelhorFreezerCapacidade(float Matriz[][6], int L, int C) {
-    float maxCapacidade = -1;
-    int freezerIndex = -1;
-    for (int i = 0; i < L; i++) {
-        if (Matriz[i][0] > maxCapacidade) {
-            maxCapacidade = Matriz[i][0];
-            freezerIndex = i;
-        }
-    }
-    printf("Melhor freezer em capacidade: %.1f (Freezer %d)\n", maxCapacidade, freezerIndex + 1);
+// Função para encontrar o freezer com a melhor capacidade
+void MelhorCapacidade(float Matriz[][6], int L, int C) {
+    float max;
+    int index;
+
+    ExibirMaiorValorEmLinha(Matriz, L, C, &max, &index);
+
+    printf("Melhor capacidade: %.1f (%s)\n", max, NomeFreezers[index]);
 }
 
-void MelhorFreezerGarantia(float Matriz[][6], int L, int C) {
-    float maxGarantia = -1;
-    int freezerIndex = -1;
-    for (int i = 0; i < L; i++) {
-        if (Matriz[i][1] > maxGarantia) {
-            maxGarantia = Matriz[i][1];
-            freezerIndex = i;
-        }
-    }
-    printf("Melhor freezer em garantia: %.0f meses (Freezer %d)\n", maxGarantia, freezerIndex + 1);
+// Função para encontrar o freezer com a melhor garantia
+void MelhorGarantia(float Matriz[][6], int L, int C) {
+    float max;
+    int index;
+
+    ExibirMaiorValorEmLinha(Matriz, L, C, &max, &index);
+
+    printf("Melhor garantia: %.1f (%s)\n", max, NomeFreezers[index]);
 }
 
-void MelhorFreezerEconomia(float Matriz[][6], int L, int C) {
-    float maxEconomia = -1;
-    int freezerIndex = -1;
-    for (int i = 0; i < L; i++) {
-        if (Matriz[i][2] > maxEconomia) {
-            maxEconomia = Matriz[i][2];
-            freezerIndex = i;
-        }
-    }
-    printf("Melhor freezer em economia: %.1f kWh/mes (Freezer %d)\n", maxEconomia, freezerIndex + 1);
+// Função para encontrar o freezer com a melhor economia
+void MelhorEconomia(float Matriz[][6], int L, int C) {
+    float min;
+    int index;
+
+    ExibirMenorValorEmLinha(Matriz, L, C, &min, &index);
+
+    printf("Melhor economia: %.1f (%s)\n", min, NomeFreezers[index]);
 }
 
-void MelhorFreezerTemperatura(float Matriz[][6], int L, int C) {
-    float minTemperatura = 999;
-    int freezerIndex = -1;
-    for (int i = 0; i < L; i++) {
-        if (Matriz[i][3] < minTemperatura) {
-            minTemperatura = Matriz[i][3];
-            freezerIndex = i;
-        }
-    }
-    printf("Melhor freezer em temperatura: %.1f C (Freezer %d)\n", minTemperatura, freezerIndex + 1);
+// Função para encontrar o freezer com a melhor temperatura
+void MelhorTemperatura(float Matriz[][6], int L, int C) {
+    float min;
+    int index;
+
+    ExibirMenorValorEmLinha(Matriz, L, C, &min, &index);
+
+    printf("Melhor temperatura: %.1f (%s) \n", min, NomeFreezers[index]);
 }
 
+// Função principal
 int main() {
-    int Op;
+
+    // Loop principal do programa
     do {
         system("cls");
         printf(">>> Pesquisa Freezer <<<\n\n");
@@ -140,45 +166,43 @@ int main() {
         printf("7 - Melhor Freezer em Economia\n");
         printf("8 - Melhor Freezer em Temperatura\n");
         printf("9 - Sair\n");
+        int Op;
         scanf("%d", &Op);
+
         switch (Op) {
-            case 1:
-                ExibeMatriz(M, 4, 6);
-                system("pause");
-                break;
-            case 2:
-                SelecionaFreezer(M, &Frz);
-                ExibeColuna(M, 4, Frz);
-                system("pause");
-                break;
-            case 3:
-                SelecionaCaracteristica(M, &Crc);
-                ExibeLinha(M, Crc, 6);
-                system("pause");
-                break;
-            case 4:
-                AlterarDado(M, 4, 6);
-                system("pause");
-                break;
-            case 5:
-                MelhorFreezerCapacidade(M, 4, 6);
-                system("pause");
-                break;
-            case 6:
-                MelhorFreezerGarantia(M, 4, 6);
-                system("pause");
-                break;
-            case 7:
-                MelhorFreezerEconomia(M, 4, 6);
-                system("pause");
-                break;
-            case 8:
-                MelhorFreezerTemperatura(M, 4, 6);
-                system("pause");
-                break;
-            case 9:
-                break;
+            case 1: ExibeMatriz(M, 4, 6);
+                    system("pause");
+                    break;
+            case 2: Frez = SelecionaFreezer(); // Seleciona o freezer desejado
+                    ExibeColuna(M, 4, Frez); // Exibe os dados do freezer selecionado
+                    system("pause");
+                    break;
+            case 3: Carac = SelecionaCaracteristica(); // Seleciona a característica desejada
+                    ExibeLinha(M, Carac, 6); // Exibe os dados da característica selecionada
+                    system("pause");
+                    break;
+            case 4: Frez = SelecionaFreezer(); // Seleciona o freezer desejado
+                    Carac = SelecionaCaracteristica(); // Seleciona a característica desejada
+                    AlterarValor(M, Frez, Carac); // Altera o valor na matriz
+                    system("pause");
+                    break;
+            case 5: MelhorCapacidade(M, 0, 6); // Encontra o freezer com melhor capacidade
+                    system("pause");
+                    break;
+            case 6: MelhorGarantia(M, 1, 6); // Encontra o freezer com melhor garantia
+                    system("pause");
+                    break;
+            case 7: MelhorEconomia(M, 2, 6); // Encontra o freezer com melhor economia
+                    system("pause");
+                    break;
+            case 8: MelhorTemperatura(M, 3, 6); // Encontra o freezer com melhor temperatura
+                    system("pause");
+                    break;
+            case 9: break; // Sai do loop
         }
-    } while (Op != 9);
+        if (Op == 9)
+            break;
+    } while (1);
+
     return 0;
 }
