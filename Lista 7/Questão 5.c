@@ -65,7 +65,7 @@ void ClienteChega() {
             scanf("%s", Hora);
 
             // Extrai a hora e o minuto da entrada
-            scanf(Hora, "%d:%d", &hora, &minuto);
+            sscanf(Hora, "%d:%d", &hora, &minuto);
 
             // Verifica se a entrada está dentro do horário de funcionamento
             if (hora >= 6 && hora < 20) {
