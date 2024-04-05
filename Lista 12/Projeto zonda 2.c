@@ -112,23 +112,28 @@ void RemoverSolicitacao() {
 // Função para consultar as solicitações de serviço cadastradas
 void ConsultarSolicitacoes() {
     printf("\n\n >>> Motos Zonda <<< \n\n");
-    int count = 0;
+
+    if (Quant == 0) {
+        printf("Não há serviços não concluídos.\n");
+        return;
+    }
+
+    printf("Solicitações de Serviço Não Concluídas:\n");
+    printf("----------------------------------------\n");
+
     for (int i = 0; i < Quant; i++) {
-        if (VZonda[i].Status == '0') {
+        if (VZonda[i].Status != '3') { // Verifica se o serviço não está concluído
             printf("Cliente: %s\n", VZonda[i].Nome);
             printf("Modelo: %s\n", VZonda[i].Modelo);
-            printf("Placa: %s\n", VZonda[i].Placa);
             printf("Defeito: %s\n", VZonda[i].Defeito);
+            printf("Placa: %s\n", VZonda[i].Placa);
             printf("Status: %c\n", VZonda[i].Status);
             printf("Preço: %.2f\n", VZonda[i].Preco);
-            printf("----------------------------\n");
-            count++;
+            printf("----------------------------------------\n");
         }
     }
-    if (count == 0) {
-        printf("Não há serviços não iniciados.\n");
-    }
 }
+
 
 // Função para concluir um serviço
 void ConcluirServico() {
@@ -151,22 +156,28 @@ void ConcluirServico() {
     }
     printf("Moto não cadastrada!");
 }
-
 // Função para atualizar o histórico financeiro com os dados do expediente atual
 void AtualizarHistoricoFinanceiro(TpHistoricoFinanceiro historico[], int *numRegistros, float totalRecebido) {
-    // Obtém o tempo atual
-    time_t rawtime;
-    struct tm *timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
+    // Verificar se já existe registro no histórico
+    if (*numRegistros > 0) {
+        // Somar o valor recebido ao último registro
+        historico[*numRegistros - 1].valorRecebido += totalRecebido;
+    } else {
+        // Caso contrário, criar um novo registro
+        // Obtém o tempo atual
+        time_t rawtime;
+        struct tm *timeinfo;
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
 
-    // Formata a data no formato dd/mm/aaaa
-    strftime(historico[*numRegistros].data, sizeof(historico[*numRegistros].data), "%d/%m/%Y", timeinfo);
-    historico[*numRegistros].valorRecebido = totalRecebido;
-    (*numRegistros)++;
+        // Formata a data no formato dd/mm/aaaa
+        strftime(historico[*numRegistros].data, sizeof(historico[*numRegistros].data), "%d/%m/%Y", timeinfo);
+        historico[*numRegistros].valorRecebido = totalRecebido;
+        (*numRegistros)++;
+    }
 }
 
-// Função para encerrar o expediente
+
 void EncerrarExpediente(TpHistoricoFinanceiro historicoFinanceiro[], int *numRegistrosHistorico) {
     float totalRecebido = 0; // Variável para armazenar o total recebido
     // Abrir arquivo auxiliar para guardar os dados das motos não concluídas
@@ -176,21 +187,24 @@ void EncerrarExpediente(TpHistoricoFinanceiro historicoFinanceiro[], int *numReg
         return;
     }
 
+    int motosNaoConcluidas = 0; // Variável para verificar se há motos não concluídas
+
     // Guardar os dados das motos não concluídas no arquivo auxiliar e calcular o total recebido
     for (int i = 0; i < Quant; i++) {
         if (VZonda[i].Status != '3') { // Se o serviço não estiver concluído
-            fprintf(arquivoAuxiliar, "%s %s %s %s %c %.2f\n", VZonda[i].Nome, VZonda[i].Modelo, VZonda[i].Placa,
+            fprintf(arquivoAuxiliar, "%s\n%s\n%s\n%s\n%c\n%.2f\n", VZonda[i].Nome, VZonda[i].Modelo, VZonda[i].Placa,
                     VZonda[i].Defeito, VZonda[i].Status, VZonda[i].Preco);
+            motosNaoConcluidas = 1; // Indica que há pelo menos uma moto não concluída
         } else {
             totalRecebido += VZonda[i].Preco; // Incrementa o total recebido
         }
     }
 
     fclose(arquivoAuxiliar);
-    printf("Expediente encerrado. Dados das motos não concluídas foram salvos.\n");
 
-    // Remover arquivo auxiliar se estiver vazio
-    if (totalRecebido == 0) {
+    if (motosNaoConcluidas) { // Se houver motos não concluídas
+        printf("Expediente encerrado. Dados das motos não concluídas foram salvos.\n");
+    } else {
         remove("motos_nao_concluidas.txt");
         printf("O arquivo de motos não concluídas foi removido pois não há serviços pendentes.\n");
     }
@@ -216,11 +230,32 @@ void ExibirHistoricoFinanceiro(TpHistoricoFinanceiro historico[], int numRegistr
     printf("Data com Maior Valor: %s\n", dataMaiorValor);
 }
 
+void CarregarMotosNaoConcluidas() {
+FILE *arquivoAuxiliar = fopen("motos_nao_concluidas.txt", "r");
+if (arquivoAuxiliar == NULL) {
+  printf("Nenhum arquivo de motos não concluídas encontrado.\n");
+  return;
+}
+
+while (fscanf(arquivoAuxiliar, " %19[^\n] %9[^\n] %7[^\n] %49[^\n] %c %f",
+              VZonda[Quant].Nome, VZonda[Quant].Modelo, VZonda[Quant].Placa,
+              VZonda[Quant].Defeito, &VZonda[Quant].Status, &VZonda[Quant].Preco) != EOF) {
+  strcpy(placasUtilizadas[Quant], VZonda[Quant].Placa);
+  Quant++;
+  if (Quant >= MAX_MOTOS) {
+    break;
+  }
+}
+}
+
 
 int main() {
     int Opcao;
     TpHistoricoFinanceiro historicoFinanceiro[MAX_HISTORICO];
     int numRegistrosHistorico = 0;
+
+    // Carregar motos não concluídas do arquivo auxiliar
+    CarregarMotosNaoConcluidas();
 
     // Inicializar o histórico financeiro com os dados salvos no arquivo auxiliar
     FILE *arquivoHistorico = fopen("historico_financeiro.txt", "r");
