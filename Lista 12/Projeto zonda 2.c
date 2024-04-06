@@ -7,17 +7,19 @@
 #define MAX_MOTOS 50
 #define MAX_HISTORICO 100
 
+// Definição da estrutura para armazenar informações sobre cada moto
 struct RegMoto {
     char Nome[20];
     char Modelo[10];
     char Placa[8];
     char Defeito[50];
-    char Status;
+    char Status; // '0' - Solicitação, '1' - Serviço Iniciado, '2' - Solicitação Removida, '3' - Serviço Concluído
     float Preco;
 };
 
 typedef struct RegMoto TpRegMoto;
 
+// Definição da estrutura para armazenar o histórico financeiro
 struct HistoricoFinanceiro {
     char data[11];
     float valorRecebido;
@@ -25,17 +27,22 @@ struct HistoricoFinanceiro {
 
 typedef struct HistoricoFinanceiro TpHistoricoFinanceiro;
 
+// Vetor de estruturas para armazenar informações sobre as motos
 TpRegMoto VZonda[MAX_MOTOS];
+// Matriz para armazenar as placas utilizadas
 char placasUtilizadas[MAX_MOTOS][8]; // Vetor para armazenar as placas já utilizadas
-int Quant = 0;
+int Quant = 0; // Variável para rastrear a quantidade de motos
 
+// Função para solicitar um serviço
 void SolicitaServico() {
     char Sair;
     do {
         if (Quant < MAX_MOTOS) {
+            // Solicitar informações sobre a moto
             printf("\n\n >>> Motos Zonda <<< \n\n");
             printf("Qual o nome do cliente? ");
             scanf(" %[^\n]s", VZonda[Quant].Nome);
+            // Converter o primeiro caractere do nome para maiúsculo e o restante para minúsculo
             VZonda[Quant].Nome[0] = toupper(VZonda[Quant].Nome[0]);
             for (int i = 1; VZonda[Quant].Nome[i] != '\0'; i++) {
                 VZonda[Quant].Nome[i] = tolower(VZonda[Quant].Nome[i]);
@@ -44,10 +51,10 @@ void SolicitaServico() {
             scanf(" %[^\n]s", VZonda[Quant].Modelo);
             int placaRepetida;
             do {
+                // Verificar se a placa já está em uso
                 printf("Qual a placa da moto? ");
                 scanf(" %[^\n]s", VZonda[Quant].Placa);
                 placaRepetida = 0; // Inicializa como falso
-                // Verificar se a placa já está em uso
                 for (int i = 0; i < Quant; i++) {
                     if (strcmp(VZonda[i].Placa, VZonda[Quant].Placa) == 0) {
                         placaRepetida = 1; // Placa repetida encontrada
@@ -134,7 +141,6 @@ void ConsultarSolicitacoes() {
     }
 }
 
-
 // Função para concluir um serviço
 void ConcluirServico() {
     char P[8]; // Corrigido para 8 para acomodar os 7 caracteres da placa e o caractere nulo '\0'
@@ -157,69 +163,63 @@ void ConcluirServico() {
     printf("Moto não cadastrada!");
 }
 
+// Função para atualizar o histórico financeiro
 void AtualizarHistoricoFinanceiro(TpHistoricoFinanceiro historico[], int *numRegistros, float totalRecebido) {
-    // Verificar se já existe registro no histórico
     if (*numRegistros > 0) {
-        // Somar o valor recebido ao último registro
         historico[*numRegistros - 1].valorRecebido += totalRecebido;
     } else {
-        // Caso contrário, criar um novo registro
-        // Obtém o tempo atual
         time_t rawtime;
         struct tm *timeinfo;
         time(&rawtime);
         timeinfo = localtime(&rawtime);
 
-        // Formata a data no formato dd/mm/aaaa
         strftime(historico[*numRegistros].data, sizeof(historico[*numRegistros].data), "%d/%m/%Y", timeinfo);
         historico[*numRegistros].valorRecebido = totalRecebido;
         (*numRegistros)++;
     }
 }
 
-
+// Função para encerrar o expediente
 void EncerrarExpediente(TpHistoricoFinanceiro historicoFinanceiro[], int *numRegistrosHistorico) {
-    float totalRecebido = 0; // Variável para armazenar o total recebido
-    // Abrir arquivo auxiliar para guardar os dados das motos não concluídas
+    float totalRecebido = 0;
     FILE *arquivoAuxiliar = fopen("motos_nao_concluidas.txt", "w");
     if (arquivoAuxiliar == NULL) {
         printf("Erro ao abrir o arquivo auxiliar.\n");
         return;
     }
 
-    int motosNaoConcluidas = 0; // Variável para verificar se há motos não concluídas
+    int motosNaoConcluidas = 0;
 
-    // Guardar os dados das motos não concluídas no arquivo auxiliar e calcular o total recebido
     for (int i = 0; i < Quant; i++) {
-        if (VZonda[i].Status != '3') { // Se o serviço não estiver concluído
+        if (VZonda[i].Status == '0'||VZonda[i].Status == '1') { // Se o serviço não estiver concluído
             fprintf(arquivoAuxiliar, "%s\n%s\n%s\n%s\n%c\n%.2f\n", VZonda[i].Nome, VZonda[i].Modelo, VZonda[i].Placa,
                     VZonda[i].Defeito, VZonda[i].Status, VZonda[i].Preco);
-            motosNaoConcluidas = 1; // Indica que há pelo menos uma moto não concluída
+            motosNaoConcluidas = 1;
         } else {
-            totalRecebido += VZonda[i].Preco; // Incrementa o total recebido
+            totalRecebido += VZonda[i].Preco;
         }
     }
 
     fclose(arquivoAuxiliar);
 
-    if (motosNaoConcluidas) { // Se houver motos não concluídas
+    if (motosNaoConcluidas) {
         printf("Expediente encerrado. Dados das motos não concluídas foram salvos.\n");
     } else {
         remove("motos_nao_concluidas.txt");
         printf("O arquivo de motos não concluídas foi removido pois não há serviços pendentes.\n");
     }
-  // Salvar o histórico financeiro em um arquivo auxiliar
-  FILE *arquivoHistorico = fopen("historico_financeiro.txt", "a");
-  if (arquivoHistorico == NULL) {
-      printf("Erro ao abrir o arquivo de histórico financeiro.\n");
-      return;
-  }
 
-  for (int i = *numRegistrosHistorico - 1; i < *numRegistrosHistorico; i++) {
-      fprintf(arquivoHistorico, "%s %.2f\n", historicoFinanceiro[i].data, historicoFinanceiro[i].valorRecebido);
-  }
-  fclose(arquivoHistorico);
-    // Atualizar o histórico financeiro com os dados do expediente atual
+    FILE *arquivoHistorico = fopen("historico_financeiro.txt", "a");
+    if (arquivoHistorico == NULL) {
+        printf("Erro ao abrir o arquivo de histórico financeiro.\n");
+        return;
+    }
+
+    for (int i = *numRegistrosHistorico - 1; i < *numRegistrosHistorico; i++) {
+        fprintf(arquivoHistorico, "%s %.2f\n", historicoFinanceiro[i].data, historicoFinanceiro[i].valorRecebido);
+    }
+    fclose(arquivoHistorico);
+
     AtualizarHistoricoFinanceiro(historicoFinanceiro, numRegistrosHistorico, totalRecebido);
 }
 
@@ -241,33 +241,30 @@ void ExibirHistoricoFinanceiro(TpHistoricoFinanceiro historico[], int numRegistr
 }
 
 void CarregarMotosNaoConcluidas() {
-FILE *arquivoAuxiliar = fopen("motos_nao_concluidas.txt", "r");
-if (arquivoAuxiliar == NULL) {
-  printf("Nenhum arquivo de motos não concluídas encontrado.\n");
-  return;
-}
+    FILE *arquivoAuxiliar = fopen("motos_nao_concluidas.txt", "r");
+    if (arquivoAuxiliar == NULL) {
+        printf("Nenhum arquivo de motos não concluídas encontrado.\n");
+        return;
+    }
 
-while (fscanf(arquivoAuxiliar, " %19[^\n] %9[^\n] %7[^\n] %49[^\n] %c %f",
-              VZonda[Quant].Nome, VZonda[Quant].Modelo, VZonda[Quant].Placa,
-              VZonda[Quant].Defeito, &VZonda[Quant].Status, &VZonda[Quant].Preco) != EOF) {
-  strcpy(placasUtilizadas[Quant], VZonda[Quant].Placa);
-  Quant++;
-  if (Quant >= MAX_MOTOS) {
-    break;
-  }
+    while (fscanf(arquivoAuxiliar, " %19[^\n] %9[^\n] %7[^\n] %49[^\n] %c %f",
+                  VZonda[Quant].Nome, VZonda[Quant].Modelo, VZonda[Quant].Placa,
+                  VZonda[Quant].Defeito, &VZonda[Quant].Status, &VZonda[Quant].Preco) != EOF) {
+        strcpy(placasUtilizadas[Quant], VZonda[Quant].Placa);
+        Quant++;
+        if (Quant >= MAX_MOTOS) {
+            break;
+        }
+    }
 }
-}
-
 
 int main() {
     int Opcao;
     TpHistoricoFinanceiro historicoFinanceiro[MAX_HISTORICO];
     int numRegistrosHistorico = 0;
 
-    // Carregar motos não concluídas do arquivo auxiliar
     CarregarMotosNaoConcluidas();
 
-    // Inicializar o histórico financeiro com os dados salvos no arquivo auxiliar
     FILE *arquivoHistorico = fopen("historico_financeiro.txt", "r");
     if (arquivoHistorico != NULL) {
         while (fscanf(arquivoHistorico, "%s %f", historicoFinanceiro[numRegistrosHistorico].data,
@@ -277,9 +274,7 @@ int main() {
         fclose(arquivoHistorico);
     }
 
-    // Loop principal do programa
     do {
-        // Exibição do menu e leitura da opção escolhida pelo usuário
         printf("\n\n >>> Motos Zonda <<< \n\n");
         printf("1 - Solicitar Servico \n");
         printf("2 - Iniciar Servico \n");
@@ -291,7 +286,6 @@ int main() {
         printf("8 - Sair \n\n");
         printf("Digite a opcao desejada: ");
         scanf("%d", &Opcao);
-        // Switch para executar a opção escolhida pelo usuário
         switch (Opcao) {
             case 1:
                 SolicitaServico();
@@ -321,6 +315,6 @@ int main() {
             default:
                 printf("Opção inválida! Por favor, tente novamente.\n");
         }
-    } while (Opcao != 8); // Continua executando até que o usuário escolha sair
+    } while (Opcao != 8);
     return 0;
 }
