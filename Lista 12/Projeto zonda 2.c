@@ -156,7 +156,7 @@ void ConcluirServico() {
     }
     printf("Moto não cadastrada!");
 }
-// Função para atualizar o histórico financeiro com os dados do expediente atual
+
 void AtualizarHistoricoFinanceiro(TpHistoricoFinanceiro historico[], int *numRegistros, float totalRecebido) {
     // Verificar se já existe registro no histórico
     if (*numRegistros > 0) {
@@ -208,7 +208,17 @@ void EncerrarExpediente(TpHistoricoFinanceiro historicoFinanceiro[], int *numReg
         remove("motos_nao_concluidas.txt");
         printf("O arquivo de motos não concluídas foi removido pois não há serviços pendentes.\n");
     }
+  // Salvar o histórico financeiro em um arquivo auxiliar
+  FILE *arquivoHistorico = fopen("historico_financeiro.txt", "a");
+  if (arquivoHistorico == NULL) {
+      printf("Erro ao abrir o arquivo de histórico financeiro.\n");
+      return;
+  }
 
+  for (int i = *numRegistrosHistorico - 1; i < *numRegistrosHistorico; i++) {
+      fprintf(arquivoHistorico, "%s %.2f\n", historicoFinanceiro[i].data, historicoFinanceiro[i].valorRecebido);
+  }
+  fclose(arquivoHistorico);
     // Atualizar o histórico financeiro com os dados do expediente atual
     AtualizarHistoricoFinanceiro(historicoFinanceiro, numRegistrosHistorico, totalRecebido);
 }
